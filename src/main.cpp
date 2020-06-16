@@ -44,7 +44,7 @@ int main(int, char **)
             break;
         }
 
-        Mat proc_frame = hand_masker.processing(frame);
+        Mat proc_frame = hand_masker.process(frame);
 
         // show frames live
         imshow("Original", frame);

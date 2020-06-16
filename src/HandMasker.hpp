@@ -12,8 +12,11 @@ class HandMasker
 private:
     Scalar hand_tresh;
     Mat hand_mask;
+    void thresh_search(Mat &input_img);
+    void draw_search(Mat &input_img);
+
 public:
-    Mat process(Mat input_image);
+    Mat process(Mat &input_img);
 };
 
 #endif
