@@ -10,8 +10,10 @@ using namespace cv;
 class HandMasker
 {
 private:
-    Scalar hand_tresh;
+    Scalar upper_hand_thresh;
+    Scalar lower_hand_thresh;
     Mat hand_mask;
+    Mat output_img;
     void thresh_search(Mat &input_img);
     void draw_search(Mat &input_img);
 

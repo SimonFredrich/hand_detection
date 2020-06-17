@@ -7,7 +7,6 @@ Mat HandMasker::process(Mat &input_img)
     cout << "Starting HandMasker processing..." << endl;
 
     // output
-    Mat output_img;
     input_img.copyTo(output_img);
 
     // threshold samples
@@ -18,6 +17,13 @@ Mat HandMasker::process(Mat &input_img)
     return output_img;
 }
 
+/**
+ * Maskierung der in den Parametern 
+ * befindlichen Objekte
+ * 
+ * @param input_img
+ * @return nothing
+ */
 void HandMasker::thresh_search(Mat &input_img)
 {
     // Image dimensions
@@ -33,21 +39,31 @@ void HandMasker::thresh_search(Mat &input_img)
     int S_hs_1 = (int)hotspot_1.val[1];
     int V_hs_1 = (int)hotspot_1.val[2];
     Vec3b hotspot_2 = input_img.at<Vec3b>(h / 3, w / 2);
-    int H_hs_2 = (int)hotspot_1.val[0];
-    int S_hs_2 = (int)hotspot_1.val[1];
-    int V_hs_2 = (int)hotspot_1.val[2];
     Vec3b hotspot_3 = input_img.at<Vec3b>(h / 1.5, w / 2);
-    int H_hs_3 = (int)hotspot_1.val[0];
-    int S_hs_3 = (int)hotspot_1.val[1];
-    int V_hs_3 = (int)hotspot_1.val[2];
     Vec3b hotspot_4 = input_img.at<Vec3b>(h / 2, w / (5.0 / 2));
-    int H_hs_4 = (int)hotspot_1.val[0];
-    int S_hs_4 = (int)hotspot_1.val[1];
-    int V_hs_4 = (int)hotspot_1.val[2];
     Vec3b hotspot_5 = input_img.at<Vec3b>(h / 2, w / (5.0 / 3));
-    int H_hs_5 = (int)hotspot_1.val[0];
-    int S_hs_5 = (int)hotspot_1.val[1];
-    int V_hs_5 = (int)hotspot_1.val[2];
+
+    int hues[5] = {
+        (int)hotspot_1.val[0],
+        (int)hotspot_2.val[0],
+        (int)hotspot_3.val[0],
+        (int)hotspot_4.val[0],
+        (int)hotspot_5.val[0]};
+
+    int highest_hue = hues[0];
+    int lowest_hue = hues[0];
+    for (size_t i = 1; i < 5; i++)
+    {
+        if (hues[i] > highest_hue)
+            highest_hue = hues[i];
+        if (hues[i] < lowest_hue)
+            lowest_hue = hues[i];
+    }
+
+    upper_hand_thresh = Scalar(highest_hue + 10, 255, 255);
+    lower_hand_thresh = Scalar(lowest_hue - 10, 50, 50);
+
+    inRange(input_img, Scalar(lower_hand_thresh), Scalar(upper_hand_thresh), output_img);
 }
 
 void HandMasker::draw_search(Mat &input_img)
