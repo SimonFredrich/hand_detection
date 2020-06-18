@@ -12,7 +12,7 @@ Mat HandMasker::process(Mat &input_img)
     // threshold samples
     thresh_search(output_img);
     // threshold sample areas
-    draw_search(output_img);
+    draw_search(input_img);
 
     return output_img;
 }
@@ -31,39 +31,61 @@ void HandMasker::thresh_search(Mat &input_img)
     int w = input_img.size().width;
 
     Mat HSV_img;
-    cvtColor(input_img, HSV_img, COLOR_RGB2HSV);
+    cvtColor(input_img, HSV_img, COLOR_BGR2HSV);
 
     // Save color samples
-    Vec3b hotspot_1 = input_img.at<Vec3b>(h / 2, w / 2);
-    int H_hs_1 = (int)hotspot_1.val[0];
-    int S_hs_1 = (int)hotspot_1.val[1];
-    int V_hs_1 = (int)hotspot_1.val[2];
-    Vec3b hotspot_2 = input_img.at<Vec3b>(h / 3, w / 2);
-    Vec3b hotspot_3 = input_img.at<Vec3b>(h / 1.5, w / 2);
-    Vec3b hotspot_4 = input_img.at<Vec3b>(h / 2, w / (5.0 / 2));
-    Vec3b hotspot_5 = input_img.at<Vec3b>(h / 2, w / (5.0 / 3));
+    int hotspot_1 = (int)HSV_img.at<Vec3b>(h / 2, w / 2).val[0];
+    int hotspot_2 = (int)HSV_img.at<Vec3b>(h / 3, w / 2).val[0];
+    int hotspot_3 = (int)HSV_img.at<Vec3b>(h / 1.5, w / 2).val[0];
+    int hotspot_4 = (int)HSV_img.at<Vec3b>(h / 2, w / (5.0 / 2)).val[0];
+    int hotspot_5 = (int)HSV_img.at<Vec3b>(h / 2, w / (5.0 / 3)).val[0];
 
-    int hues[5] = {
-        (int)hotspot_1.val[0],
-        (int)hotspot_2.val[0],
-        (int)hotspot_3.val[0],
-        (int)hotspot_4.val[0],
-        (int)hotspot_5.val[0]};
+    cout << hotspot_1 << endl;
 
-    int highest_hue = hues[0];
-    int lowest_hue = hues[0];
-    for (size_t i = 1; i < 5; i++)
+    Scalar upper_thresholds[5] = {
+        Scalar(hotspot_1 + 10, 255, 255),
+        Scalar(hotspot_2 + 10, 255, 255),
+        Scalar(hotspot_3 + 10, 255, 255),
+        Scalar(hotspot_4 + 10, 255, 255),
+        Scalar(hotspot_5 + 10, 255, 255),
+    };
+
+    Scalar lower_thresholds[5] = {
+        Scalar(hotspot_1 - 10, 100, 100),
+        Scalar(hotspot_2 - 10, 100, 100),
+        Scalar(hotspot_3 - 10, 100, 100),
+        Scalar(hotspot_4 - 10, 100, 100),
+        Scalar(hotspot_5 - 10, 100, 100),
+    };
+
+    //Mat thresh_imgs[5];
+    array<Mat, 5> thresh_imgs;
+
+    // Create all the individual thresholds
+    for (size_t i = 0; i < thresh_imgs.size(); i++)
     {
-        if (hues[i] > highest_hue)
-            highest_hue = hues[i];
-        if (hues[i] < lowest_hue)
-            lowest_hue = hues[i];
+        inRange(input_img, lower_thresholds[i], upper_thresholds[i], thresh_imgs[i]);
     }
 
-    upper_hand_thresh = Scalar(highest_hue + 10, 255, 255);
-    lower_hand_thresh = Scalar(lowest_hue - 10, 50, 50);
+    cout << thresh_imgs[0] << endl;
 
-    inRange(input_img, Scalar(lower_hand_thresh), Scalar(upper_hand_thresh), output_img);
+    // unite thresholds
+    for (size_t i = 1; i < thresh_imgs.size(); i++)
+    {
+        for (size_t row = 0; row < thresh_imgs[i].rows; row++)
+        {
+            for (size_t col = 0; col < thresh_imgs[i].cols; col++)
+            {
+                int pixel = (int)thresh_imgs[i].at<uchar>(row, col);
+                if (pixel != 0)
+                {
+                    thresh_imgs[0].at<uchar>(row, col) = 255;
+                }
+            }
+        }
+    }
+
+    output_img = thresh_imgs[0];
 }
 
 void HandMasker::draw_search(Mat &input_img)
